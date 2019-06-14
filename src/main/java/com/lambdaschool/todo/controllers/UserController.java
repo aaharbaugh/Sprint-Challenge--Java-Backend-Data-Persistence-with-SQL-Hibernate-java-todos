@@ -1,6 +1,8 @@
 package com.lambdaschool.todo.controllers;
 
+import com.lambdaschool.todo.models.ToDo;
 import com.lambdaschool.todo.models.User;
+import com.lambdaschool.todo.services.ToDoService;
 import com.lambdaschool.todo.services.UserService;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +26,9 @@ public class UserController
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ToDoService todoService;
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @GetMapping(value = "/users", produces = {"application/json"})
@@ -69,29 +74,25 @@ public class UserController
         return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
     }
 
-    @PostMapping(value = "/restaurant",
+    @PostMapping(value = "/users/todo/{userid}",
             consumes = {"application/json"},
             produces = {"application/json"})
-    public ResponseEntity<?> addNewRestaurant(@Valid
-                                              @RequestBody Restaurant newRestaurant)
+    public ResponseEntity<?> addNewTodo(@Valid
+                                              @RequestBody ToDo newTodo,
+                                        @PathVariable Long userid)
     {
-        newRestaurant = restaurantService.save(newRestaurant);
+        newTodo.setUser(userService.findUserById(userid));
 
-        // set the location header for the newly created resource
-        HttpHeaders responseHeaders = new HttpHeaders();
-        URI newRestaurantURI = ServletUriComponentsBuilder.fromCurrentRequest()
-                .path("/{restaurantid}").buildAndExpand(newRestaurant.getRestaurantid()).toUri();
-        responseHeaders.setLocation(newRestaurantURI);
 
-        return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
+        return new ResponseEntity<>(todoService.save(newTodo), HttpStatus.CREATED);
     }
 
-//    @PutMapping(value = "/user/{id}")
-//    public ResponseEntity<?> updateUser(@RequestBody User updateUser, @PathVariable long id)
-//    {
-//        userService.update(updateUser, id);
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
+    @PutMapping(value = "/todos/todoids/{todoid}")
+    public ResponseEntity<?> updateTodo(@RequestBody ToDo updateTodo, @PathVariable long todoid)
+    {
+        todoService.update(updateTodo, todoid);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
     //delete user
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
